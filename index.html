@@ -1,19 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="author" content="Guilherme Ferreira de Araujo">
     <title>Scatterplot Graph</title>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    
+
+    <div id="mainDiv" class="container">
+
+        <h1 id="title">This is my title</h1>
+        <svg></svg>
+    </div>
+
+
     <script src="d3.min.js"></script>
+
 
     <script>
 
-        window.onload = function() {
+        window.onload = function () {
             document.addEventListener("DOMContentLoaded", getServerData());
         }
 
@@ -29,9 +40,123 @@
             req.onload = function () {
                 var data = req.response;
                 console.log(data);
+
+                var years = data.map(x => x.Year);
+
+                var specifier = "%M:%S";
+
+                var times = data.map(x => d3.timeParse(specifier)(x.Time));
+
+                console.log(times.map(x => x.getTime()));
+
+                // set the dimensions and margins of the graph
+                var margin = { top: 10, right: 30, bottom: 100, left: 60 },
+                    width = 800 - margin.left - margin.right,
+                    height = 500 - margin.top - margin.bottom;
+
+                // append the svg object to the body of the page
+                var svg = d3.select("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform",
+                        "translate(" + margin.left + "," + margin.top + ")");
+
+
+                // Add X axis
+                var x = d3.scaleLinear()
+                    .domain([d3.min(years), d3.max(years)])
+                    .range([0, width]);
+                svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .attr("id", "x-axis")
+                    .call(d3.axisBottom(x).tickFormat(x => x.toString()));
+
+
+                // Add Y axis
+                var y = d3.scaleTime()
+                    .domain(d3.extent(times))
+                    .range([0, height]);
+                svg.append("g")
+                    .attr("id", "y-axis")
+                    .call(d3.axisLeft(y).tickFormat(x => d3.timeFormat(specifier)(x)));
+
+                // Add dots
+                svg.selectAll("dot")
+                    .data(data)
+                    .enter()
+                    .append("circle")
+                    .attr("data-xvalue", (d, i) => d.Year.toString())
+                    .attr("data-yvalue", d => d3.timeParse(specifier)(d.Time))
+                    .attr("class", "dot")
+                    .attr("cx", function (d) { return x(d.Year); })
+                    .attr("cy", function (d) { return y(d3.timeParse(specifier)(d.Time)); })
+                    .attr("r", 6)
+                    .style("fill", x => {
+                        return x.Doping != '' ? 'blue' : 'red';
+                    })
+                    .style("border", "5px solid black")
+
+                svg.append("g")
+                    .attr("id", "legend")
+
+                svg.select("#legend")
+                    .append("circle")
+                    .attr("cx", width / 2)
+                    .attr("cy", height + 50)
+                    .attr("r", 6)
+                    .style("fill", "red")
+
+                svg.select("#legend")
+                    .append("text")
+                    .attr("x", (width / 2) + 10)
+                    .attr("y", height + 50)
+                    .text("Dopping Allegations")
+                    .style("font-size", "12px")
+                    .attr("alignment-baseline", "middle")
+
+                svg.select("#legend")
+                    .append("circle")
+                    .attr("cx", width / 6)
+                    .attr("cy", height + 50)
+                    .attr("r", 6)
+                    .style("fill", "blue")
+
+                svg.select("#legend")
+                    .append("text")
+                    .attr("x", (width / 6) + 10)
+                    .attr("y", height + 50)
+                    .text("No Dopping Allegations")
+                    .style("font-size", "12px")
+                    .attr("alignment-baseline", "middle")
+
+
+
+                d3.selectAll("circle")
+                    .on("mouseenter", function (actual, i) { 
+                        var tooltip = d3.select("#mainDiv")
+                        .append("div")
+                        .attr("data-year", actual.Year)
+                        .attr("id", "tooltip")
+                        .attr("class", "tooltip")
+                        .text("Time: " + actual.Time )
+
+                    })
+
+                    .on("mousemove", function () { 
+                        d3.select("#tooltip")
+                        .style("top", (event.pageY + 25) + "px")
+                        .style("left", (event.pageX + 25) + "px"); })
+                        .on("mouseout", function () { 
+                        d3.select("#tooltip").remove();
+                     });
             }
         }
 
     </script>
+
+    <script src='https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js'></script>
+
 </body>
+
 </html>
