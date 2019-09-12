@@ -121,178 +121,190 @@
             return result;
         }
 
-        function getServerData() {
+        function setD3Graphs(data) {
 
-            var url = 'https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/cyclist-data.json';
-            var req = new XMLHttpRequest();
+            var topHank = data.map(x => {
+                return {
+                    rank: x.Place,
+                    name: x.Name,
+                    nationality: x.Nationality,
+                    time: x.Time,
+                    year: x.Year,
+                    doping: x.Doping
+                }
+            });
 
-            req.responseType = 'json';
+            var recordsByCountry = {}
 
-            req.open('GET', url, true);
-            req.send();
-            req.onload = function () {
-                var data = req.response;
-                console.log(data);
+            data.forEach(item => {
+                var country = item.Nationality;
+                if (!recordsByCountry.hasOwnProperty(country)) {
+                    recordsByCountry[country] = 0;
+                }
+                recordsByCountry[country]++;
+            });
 
-                var topHank = data.map(x => {
-                    return {
-                        rank: x.Place,
-                        name: x.Name,
-                        nationality: x.Nationality,
-                        time: x.Time,
-                        year: x.Year,
-                        doping: x.Doping
-                    }
+            setUpRecordsByCountryBar(recordsByCountry);
+
+            var tr = d3.select("tbody")
+                .selectAll("tr")
+                .data(topHank)
+                .enter().append("tr");
+
+            var td = tr.selectAll("td")
+                .data(function (d, i) { return Object.values(d); })
+                .enter().append("td")
+                .text(function (d) { return d; });
+
+            var years = data.map(x => x.Year);
+
+            var specifier = "%M:%S";
+
+            var times = data.map(x => d3.timeParse(specifier)(x.Time));
+
+            // set the dimensions and margins of the graph
+            var margin = { top: 90, right: 30, bottom: 100, left: 60 },
+                width = 800 - margin.left - margin.right,
+                height = 500 - margin.top - margin.bottom;
+
+            // append the svg object to the body of the page
+            var svg = d3.select("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+
+
+            // Add X axis
+            var x = d3.scaleLinear()
+                .domain([d3.min(years), d3.max(years)])
+                .range([0, width]);
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .attr("id", "x-axis")
+                .call(d3.axisBottom(x).tickFormat(x => x.toString()));
+
+            // Add Y axis
+            var y = d3.scaleTime()
+                .domain(d3.extent(times))
+                .range([0, height]);
+            svg.append("g")
+                .attr("id", "y-axis")
+                .call(d3.axisLeft(y).tickFormat(x => d3.timeFormat(specifier)(x)));
+
+            // Add dots
+            svg.selectAll("dot")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("data-xvalue", (d, i) => d.Year.toString())
+                .attr("data-yvalue", d => d3.timeParse(specifier)(d.Time))
+                .attr("class", "dot")
+                .attr("cx", function (d) { return x(d.Year); })
+                .attr("cy", function (d) { return y(d3.timeParse(specifier)(d.Time)); })
+                .attr("r", 6)
+                .style("fill", x => {
+                    return x.Doping != '' ? '#17252A' : 'navy';
+                })
+                .style("border", "5px solid black")
+
+            svg.append("g")
+                .attr("id", "legend")
+
+
+            svg.select("#legend")
+                .append("circle")
+                .attr("cx", width / 2)
+                .attr("cy", height + 50)
+                .attr("r", 6)
+                .style("fill", "navy")
+
+            svg.select("#legend")
+                .append("text")
+                .attr("x", (width / 2) + 10)
+                .attr("y", height + 50)
+                .text("No Dopping Allegations")
+                .style("font-size", "12px")
+                .attr("alignment-baseline", "middle")
+
+            svg.select("#legend")
+                .append("circle")
+                .attr("cx", width / 6)
+                .attr("cy", height + 50)
+                .attr("r", 6)
+                .style("fill", "#17252A")
+
+            svg.select("#legend")
+                .append("text")
+                .attr("x", (width / 6) + 10)
+                .attr("y", height + 50)
+                .text("Dopping Allegations")
+                .style("font-size", "12px")
+                .attr("alignment-baseline", "middle")
+
+            svg.append('text')
+                .attr('id', 'title')
+                .attr('class', 'title')
+                .attr('x', width / 2)
+                .attr('y', -30)
+                .attr('text-anchor', 'middle')
+                .text('Doping in Professional Bicycle Racing')
+
+
+            d3.selectAll("circle")
+                .on("mouseenter", function (actual, i) {
+                    var tooltip = d3.select("#mainDiv")
+                        .append("div")
+                        .attr("data-year", actual.Year)
+                        .attr("id", "tooltip")
+                        .attr("class", "tooltip");
+
+                    tooltip.append("p")
+                        .text("Nationality:" + actual.Nationality);
+
+                    tooltip.append("p")
+                        .text("Year: " + actual.Year + ", Time: " + actual.Time)
+
+                    tooltip.append("p")
+                        .text("Name: " + actual.Name)
+
+                    tooltip.append("p")
+                        .text(actual.Doping)
+
+                })
+
+                .on("mousemove", function () {
+                    d3.select("#tooltip")
+                        .style("top", (event.pageY + 25) + "px")
+                        .style("left", (event.pageX + 25) + "px");
+                })
+                .on("mouseout", function () {
+                    d3.select("#tooltip").remove();
                 });
 
-                var recordsByCountry = {}
-
-                data.forEach(item => {
-                    var country = item.Nationality;
-                    if (!recordsByCountry.hasOwnProperty(country)) {
-                        recordsByCountry[country] = 0;
-                    }
-                    recordsByCountry[country]++;
-                });
-
-                setUpRecordsByCountryBar(recordsByCountry);
-
-                var tr = d3.select("tbody")
-                    .selectAll("tr")
-                    .data(topHank)
-                    .enter().append("tr");
-
-                var td = tr.selectAll("td")
-                    .data(function (d, i) { return Object.values(d); })
-                    .enter().append("td")
-                    .text(function (d) { return d; });
-
-                var years = data.map(x => x.Year);
-
-                var specifier = "%M:%S";
-
-                var times = data.map(x => d3.timeParse(specifier)(x.Time));
-
-                // set the dimensions and margins of the graph
-                var margin = { top: 90, right: 30, bottom: 100, left: 60 },
-                    width = 800 - margin.left - margin.right,
-                    height = 500 - margin.top - margin.bottom;
-
-                // append the svg object to the body of the page
-                var svg = d3.select("svg")
-                    .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top + margin.bottom)
-                    .append("g")
-                    .attr("transform",
-                        "translate(" + margin.left + "," + margin.top + ")");
-
-                // Add X axis
-                var x = d3.scaleLinear()
-                    .domain([d3.min(years), d3.max(years)])
-                    .range([0, width]);
-                svg.append("g")
-                    .attr("transform", "translate(0," + height + ")")
-                    .attr("id", "x-axis")
-                    .call(d3.axisBottom(x).tickFormat(x => x.toString()));
-
-                // Add Y axis
-                var y = d3.scaleTime()
-                    .domain(d3.extent(times))
-                    .range([0, height]);
-                svg.append("g")
-                    .attr("id", "y-axis")
-                    .call(d3.axisLeft(y).tickFormat(x => d3.timeFormat(specifier)(x)));
-
-                // Add dots
-                svg.selectAll("dot")
-                    .data(data)
-                    .enter()
-                    .append("circle")
-                    .attr("data-xvalue", (d, i) => d.Year.toString())
-                    .attr("data-yvalue", d => d3.timeParse(specifier)(d.Time))
-                    .attr("class", "dot")
-                    .attr("cx", function (d) { return x(d.Year); })
-                    .attr("cy", function (d) { return y(d3.timeParse(specifier)(d.Time)); })
-                    .attr("r", 6)
-                    .style("fill", x => {
-                        return x.Doping != '' ? '#17252A' : 'navy';
-                    })
-                    .style("border", "5px solid black")
-
-                svg.append("g")
-                    .attr("id", "legend")
-
-                svg.select("#legend")
-                    .append("circle")
-                    .attr("cx", width / 2)
-                    .attr("cy", height + 50)
-                    .attr("r", 6)
-                    .style("fill", "navy")
-
-                svg.select("#legend")
-                    .append("text")
-                    .attr("x", (width / 2) + 10)
-                    .attr("y", height + 50)
-                    .text("No Dopping Allegations")
-                    .style("font-size", "12px")
-                    .attr("alignment-baseline", "middle")
-
-                svg.select("#legend")
-                    .append("circle")
-                    .attr("cx", width / 6)
-                    .attr("cy", height + 50)
-                    .attr("r", 6)
-                    .style("fill", "#17252A")
-
-                svg.select("#legend")
-                    .append("text")
-                    .attr("x", (width / 6) + 10)
-                    .attr("y", height + 50)
-                    .text("Dopping Allegations")
-                    .style("font-size", "12px")
-                    .attr("alignment-baseline", "middle")
-
-                svg.append('text')
-                    .attr('id', 'title')
-                    .attr('class', 'title')
-                    .attr('x', width / 2)
-                    .attr('y', -30)
-                    .attr('text-anchor', 'middle')
-                    .text('Doping in Professional Bicycle Racing')
-
-                d3.selectAll("circle")
-                    .on("mouseenter", function (actual, i) {
-                        var tooltip = d3.select("#mainDiv")
-                            .append("div")
-                            .attr("data-year", actual.Year)
-                            .attr("id", "tooltip")
-                            .attr("class", "tooltip");
-
-                            tooltip.append("p")
-                            .text("Nationality:" + actual.Nationality);
-                            
-                            tooltip.append("p")
-                            .text("Year: " + actual.Year + ", Time: " + actual.Time)
-
-                            tooltip.append("p")
-                            .text("Name: " + actual.Name)
-                            
-                            tooltip.append("p")
-                            .text(actual.Doping)
-
-                    })
-
-                    .on("mousemove", function () {
-                        d3.select("#tooltip")
-                            .style("top", (event.pageY + 25) + "px")
-                            .style("left", (event.pageX + 25) + "px");
-                    })
-                    .on("mouseout", function () {
-                        d3.select("#tooltip").remove();
-                    });
-                
                 var loadingPanel = document.getElementById("loadingPanel");
                 loadingPanel.style.display = 'none';
+        }
+
+        function getServerData() {
+
+            if (sessionStorage.getItem("cyclistdata") === null) {
+                var url = 'https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/cyclist-data.json';
+                var req = new XMLHttpRequest();
+
+                req.responseType = 'json';
+
+                req.open('GET', url, true);
+                req.send();
+                req.onload = function () {
+                    var data = req.response;
+                    sessionStorage.setItem("cyclistdata", JSON.stringify(data));
+                    setD3Graphs(data);
+                }
+            } else {
+                var data = JSON.parse(sessionStorage.getItem("cyclistdata"));
+                setD3Graphs(data);
             }
         }
 
