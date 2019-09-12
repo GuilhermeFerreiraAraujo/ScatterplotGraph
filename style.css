@@ -24,18 +24,16 @@ svg {
     color: navy;
 }
 
-
 .tooltip {
-    padding-top: 20px;
-    padding-bottom: 20px;
-    font-weight: bold;
+    padding: 20px 0px 20px 20px;
     position: absolute;
     box-shadow: 0px 0px 20px;
-    width: 150px;
-    background-color: white;
+    width: 300px;
+    background-color: rgb(23,37,42, 0.9);
+    color: white;
     border-radius: 10px;
+    font-size: 12px;
 }
-
 
 .flex {
     display: flex;
