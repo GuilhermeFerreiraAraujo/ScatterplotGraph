@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="author" content="Guilherme Ferreira de Araujo">
+    <title>Scatterplot Graph</title>
+</head>
+<body>
+    
+    <script src="d3.min.js"></script>
+
+    <script>
+
+        window.onload = function() {
+            document.addEventListener("DOMContentLoaded", getServerData());
+        }
+
+        function getServerData() {
+
+            var url = 'https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/cyclist-data.json';
+            var req = new XMLHttpRequest();
+
+            req.responseType = 'json';
+
+            req.open('GET', url, true);
+            req.send();
+            req.onload = function () {
+                var data = req.response;
+                console.log(data);
+            }
+        }
+
+    </script>
+</body>
+</html>
