@@ -12,21 +12,125 @@
 
 <body>
 
-    <div id="mainDiv" class="container">
 
-        <h1 id="title">This is my title</h1>
-        <svg></svg>
+    <div class="flex container">
+
+        <div>
+            <table id="TopHankTable">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Nationality</th>
+                        <th>Time</th>
+                        <th>Year</th>
+                        <th>Doping</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div id="mainDiv">
+            <svg></svg>
+            <svg width="800px" height="500px" id="recordsByCountryBar"></svg>
+
+        </div>
+
+
     </div>
 
 
-    <script src="d3.min.js"></script>
 
+    <script src="d3.min.js"></script>
 
     <script>
 
         window.onload = function () {
             document.addEventListener("DOMContentLoaded", getServerData());
         }
+
+        function setUpRecordsByCountryBar(countriesObj) {
+            var svg = d3.select("#recordsByCountryBar");
+            var list = convertObjectIntoArray(countriesObj);
+
+
+
+
+            console.log(list);
+
+
+            const margin = 80;
+            const width = 800 - 2 * margin;
+            const height = 500 - 2 * margin;
+
+
+            const chart = svg.append('g')
+                .attr('transform', `translate(${margin}, ${margin})`);
+
+            const countries = list.map(x => x[0]);
+
+            const xScale = d3.scalePoint()
+                .range([25, width - 25])
+                .domain(countries)
+
+            const yScale = d3.scaleLinear()
+                .range([height, 0])
+                .domain([0, 10]);
+
+            const makeYLines = () => d3.axisLeft()
+                .scale(yScale)
+
+            svg.append('text')
+                .attr('class', 'title')
+                .attr('x', width / 1.6)
+                .attr('y', 55)
+                .attr('text-anchor', 'middle')
+                .text('Records per country')
+
+            chart.append('g')
+                .attr('transform', `translate(0, ${height})`)
+                .call(d3.axisBottom(xScale));
+
+            chart.append('g')
+                .call(d3.axisLeft(yScale));
+
+            chart.append('g')
+                .call(makeYLines()
+                    .tickSize(-width, 0, 0)
+                    .tickFormat('')
+                )
+
+
+
+            const barGroups = chart.selectAll()
+                .data(list)
+                .enter()
+                .append('g')
+
+            barGroups
+                .append('rect')
+                .attr('fill', "#17252A")
+                .attr('class', 'bar')
+                .attr('x', function (d, i) {
+                    return xScale(countries[i]) - 13;
+                })
+                .attr('y', (g) => yScale(g[1]))
+                .attr('height', (g) => height - yScale(g[1]))
+                .attr('width', '26px')
+
+
+
+
+        }
+
+        function convertObjectIntoArray(obj) {
+            var result = Object.keys(obj).map(function (key) {
+                return [key, obj[key]];
+            });
+            return result;
+        }
+
 
         function getServerData() {
 
@@ -41,6 +145,39 @@
                 var data = req.response;
                 console.log(data);
 
+                var topHank = data.map(x => {
+                    return {
+                        rank: x.Place,
+                        name: x.Name,
+                        nationality: x.Nationality,
+                        time: x.Time,
+                        year: x.Year,
+                        doping: x.Doping
+                    }
+                });
+
+                var recordsByCountry = {}
+
+                data.forEach(item => {
+                    var country = item.Nationality;
+                    if (!recordsByCountry.hasOwnProperty(country)) {
+                        recordsByCountry[country] = 0;
+                    }
+                    recordsByCountry[country]++;
+                });
+
+                setUpRecordsByCountryBar(recordsByCountry);
+
+                var tr = d3.select("tbody")
+                    .selectAll("tr")
+                    .data(topHank)
+                    .enter().append("tr");
+
+                var td = tr.selectAll("td")
+                    .data(function (d, i) { return Object.values(d); })
+                    .enter().append("td")
+                    .text(function (d) { return d; });
+
                 var years = data.map(x => x.Year);
 
                 var specifier = "%M:%S";
@@ -50,7 +187,7 @@
                 console.log(times.map(x => x.getTime()));
 
                 // set the dimensions and margins of the graph
-                var margin = { top: 10, right: 30, bottom: 100, left: 60 },
+                var margin = { top: 90, right: 30, bottom: 100, left: 60 },
                     width = 800 - margin.left - margin.right,
                     height = 500 - margin.top - margin.bottom;
 
@@ -93,7 +230,7 @@
                     .attr("cy", function (d) { return y(d3.timeParse(specifier)(d.Time)); })
                     .attr("r", 6)
                     .style("fill", x => {
-                        return x.Doping != '' ? 'blue' : 'red';
+                        return x.Doping != '' ? '#17252A' : 'navy';
                     })
                     .style("border", "5px solid black")
 
@@ -105,13 +242,13 @@
                     .attr("cx", width / 2)
                     .attr("cy", height + 50)
                     .attr("r", 6)
-                    .style("fill", "red")
+                    .style("fill", "navy")
 
                 svg.select("#legend")
                     .append("text")
                     .attr("x", (width / 2) + 10)
                     .attr("y", height + 50)
-                    .text("Dopping Allegations")
+                    .text("No Dopping Allegations")
                     .style("font-size", "12px")
                     .attr("alignment-baseline", "middle")
 
@@ -120,36 +257,44 @@
                     .attr("cx", width / 6)
                     .attr("cy", height + 50)
                     .attr("r", 6)
-                    .style("fill", "blue")
+                    .style("fill", "#17252A")
 
                 svg.select("#legend")
                     .append("text")
                     .attr("x", (width / 6) + 10)
                     .attr("y", height + 50)
-                    .text("No Dopping Allegations")
+                    .text("Dopping Allegations")
                     .style("font-size", "12px")
                     .attr("alignment-baseline", "middle")
 
+                svg.append('text')
+                    .attr('id', 'title')
+                    .attr('class', 'title')
+                    .attr('x', width / 2)
+                    .attr('y', -30)
+                    .attr('text-anchor', 'middle')
+                    .text('Doping in Professional Bicycle Racing')
 
 
                 d3.selectAll("circle")
-                    .on("mouseenter", function (actual, i) { 
+                    .on("mouseenter", function (actual, i) {
                         var tooltip = d3.select("#mainDiv")
-                        .append("div")
-                        .attr("data-year", actual.Year)
-                        .attr("id", "tooltip")
-                        .attr("class", "tooltip")
-                        .text("Time: " + actual.Time )
+                            .append("div")
+                            .attr("data-year", actual.Year)
+                            .attr("id", "tooltip")
+                            .attr("class", "tooltip")
+                            .text("Time: " + actual.Time)
 
                     })
 
-                    .on("mousemove", function () { 
+                    .on("mousemove", function () {
                         d3.select("#tooltip")
-                        .style("top", (event.pageY + 25) + "px")
-                        .style("left", (event.pageX + 25) + "px"); })
-                        .on("mouseout", function () { 
+                            .style("top", (event.pageY + 25) + "px")
+                            .style("left", (event.pageX + 25) + "px");
+                    })
+                    .on("mouseout", function () {
                         d3.select("#tooltip").remove();
-                     });
+                    });
             }
         }
 

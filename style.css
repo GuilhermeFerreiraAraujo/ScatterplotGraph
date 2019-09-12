@@ -2,19 +2,26 @@
 html {
     box-sizing: border-box;
     font-family: Arial, Helvetica, sans-serif;
+    background-color: #17252A;;
 }
 
 .container {
-    text-align: center;
-    margin-top: 150px;
+    margin: auto;
+    width: 70%;
 }
 
+
 svg {
-    margin-left: 200px;
-    margin-top: 200px;
     box-shadow: 0px 0px 10px;
     border-radius: 10px;
-    margin: auto;
+    background-color: #F7F7F7;
+}
+
+.title {
+    font-weight: bolder;
+    font-size: 20px;
+    text-decoration: underline;
+    color: navy;
 }
 
 
@@ -27,4 +34,62 @@ svg {
     width: 150px;
     background-color: white;
     border-radius: 10px;
+}
+
+
+.flex {
+    display: flex;
+    flex-direction: row;
+    justify-content:space-around;
+}
+
+#recordsByCountryBar {
+    margin-top: 30px;
+}
+
+#TopHankTable{
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px;
+    border-collapse:collapse ;
+    width: 800px;
+    margin-right: 20px;
+}
+
+#TopHankTable tbody {
+    font-size: 12px;
+}
+
+#TopHankTable tbody tr td {
+    border-top: 1px solid #F1F1F1;
+    height: 25px;
+}
+
+#TopHankTable tbody tr:hover {
+    border-top: 1px solid #F1F1F1;
+    background-color: #17252A;
+    color: white;
+}
+
+#TopHankTable thead tr th{
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+#TopHankTable tbody tr td:first-child{
+    text-align: center;
+}
+
+#TopHankTable tbody tr td:nth-child(3){
+    text-align: center;
+}
+
+
+#TopHankTable tbody tr td:nth-child(4){
+    text-align: center;
+}
+
+
+#TopHankTable tbody tr td:nth-child(5){
+    text-align: center;
 }
