@@ -12,6 +12,9 @@
 
 <body>
 
+    <div id="loadingPanel">
+        <h1>Loading<span id="dot1">.</span><span id="dot2">.</span><span id="dot3">.</span></h1>
+    </div>
 
     <div class="flex container">
 
@@ -170,8 +173,6 @@
 
                 var times = data.map(x => d3.timeParse(specifier)(x.Time));
 
-                console.log(times.map(x => x.getTime()));
-
                 // set the dimensions and margins of the graph
                 var margin = { top: 90, right: 30, bottom: 100, left: 60 },
                     width = 800 - margin.left - margin.right,
@@ -185,7 +186,6 @@
                     .attr("transform",
                         "translate(" + margin.left + "," + margin.top + ")");
 
-
                 // Add X axis
                 var x = d3.scaleLinear()
                     .domain([d3.min(years), d3.max(years)])
@@ -194,7 +194,6 @@
                     .attr("transform", "translate(0," + height + ")")
                     .attr("id", "x-axis")
                     .call(d3.axisBottom(x).tickFormat(x => x.toString()));
-
 
                 // Add Y axis
                 var y = d3.scaleTime()
@@ -261,7 +260,6 @@
                     .attr('text-anchor', 'middle')
                     .text('Doping in Professional Bicycle Racing')
 
-
                 d3.selectAll("circle")
                     .on("mouseenter", function (actual, i) {
                         var tooltip = d3.select("#mainDiv")
@@ -292,6 +290,9 @@
                     .on("mouseout", function () {
                         d3.select("#tooltip").remove();
                     });
+                
+                var loadingPanel = document.getElementById("loadingPanel");
+                loadingPanel.style.display = 'none';
             }
         }
 
